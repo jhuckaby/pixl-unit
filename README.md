@@ -28,12 +28,12 @@ Specify command-line arguments using the format `--key value` and do this *after
 
 | Argument | Default Value | Description |
 | -------- | ------------- | ----------- |
-| `--threads` | 1 | The total number of threads to use when executing tests.  See warning below. | 
-| `--verbose` | 0 | Set this to `1` to enable verbose output to the console. | 
-| `--quiet` | 0 | Set this to `1` to suppress all output to the console. | 
-| `--color` | 1 | Enables or disables color output using the chalk module. | 
-| `--fatal` | 0 | Set this to `1` to exit immediately after the first assertion failure. | 
-| `--output` | "" | Set this to a file path to emit a JSON report (works with quiet mode). | 
+| `threads` | 1 | The total number of threads to use when executing tests.  See warning below. | 
+| `verbose` | 0 | Set this to `1` to enable verbose output to the console. | 
+| `quiet` | 0 | Set this to `1` to suppress all output to the console. | 
+| `color` | 1 | Enables or disables color output using the chalk module. | 
+| `fatal` | 0 | Set this to `1` to exit immediately after the first assertion failure. | 
+| `output` | "" | Set this to a file path to emit a JSON report (works with quiet mode). | 
 
 Here is an example, which runs all the tests in `tests.js`, enables quiet mode, and generates a JSON report file:
 
