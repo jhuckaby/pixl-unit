@@ -48,7 +48,7 @@ Please be careful when increasing the `--threads` setting, beyond the default va
 To use `pixl-unit` in your own npm module, first declare it in your `package.json` in the `devDependencies` section:
 
 ```javascript
-	"devDepenendcies": {
+	"devDependencies": {
 		"pixl-unit": "*"
 	}
 ```

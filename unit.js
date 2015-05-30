@@ -120,7 +120,7 @@ async.eachSeries( files,
 								this.failed++;
 								verbose("F\n");
 								if (!msg) msg = "(No message)";
-								print( chalk.bold.red("Assert Failed: " + file + ": " + test_name + ": " + msg) );
+								print( chalk.bold.red("Assert Failed: " + file + ": " + test_name + ": " + msg) + "\n" );
 								stats.errors.push( "Assert Failed: " + file + ": " + test_name + ": " + msg );
 								if (args.fatal) process.exit(1);
 							}
@@ -134,8 +134,9 @@ async.eachSeries( files,
 								verbose("F\n");
 								var msg = "Error: Wrong number of assertions: " + file + ": " + test_name + ": " + 
 									"Expected " + this.expected + ", Got " + this.asserted + ".";
-								print( chalk.bold.red(msg) );
+								print( chalk.bold.red(msg) + "\n" );
 								stats.errors.push( msg );
+								if (args.fatal) process.exit(1);
 							}
 							if (!this.failed) {
 								// test passed
