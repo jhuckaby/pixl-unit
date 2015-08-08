@@ -1,7 +1,7 @@
 {
 	"name": "pixl-unit",
-	"version": "1.0.0",
-	"description": "A very simple unit test runner for Node.JS.",
+	"version": "1.0.1",
+	"description": "A very simple unit test runner for Node.js.",
 	"author": "Joseph Huckaby <jhuckaby@gmail.com>",
 	"homepage": "https://github.com/jhuckaby/pixl-unit",
 	"license": "MIT",
