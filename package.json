@@ -1,33 +1,31 @@
 {
-	"name": "pixl-unit",
-	"version": "1.0.1",
-	"description": "A very simple unit test runner for Node.js.",
-	"author": "Joseph Huckaby <jhuckaby@gmail.com>",
-	"homepage": "https://github.com/jhuckaby/pixl-unit",
-	"license": "MIT",
-	"main": "unit.js",
-	"bin": "unit.js",
-	"scripts": {
-		"test": "pixl-unit test.js"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/jhuckaby/pixl-unit"
-	},
-	"bugs": {
-		"url": "https://github.com/jhuckaby/pixl-unit/issues"
-	},
-	"keywords": [
-		"unit",
-		"test"
-	],
-	"dependencies": {
-		"async": "*",
-		"chalk": "*",
-		"pixl-args": ">=1.0.0",
-		"pixl-tools": ">=1.0.0"
-	},
-	"devDependencies": {
-		
-	}
+  "name": "pixl-unit",
+  "version": "1.0.2",
+  "description": "A very simple unit test runner for Node.js.",
+  "author": "Joseph Huckaby <jhuckaby@gmail.com>",
+  "homepage": "https://github.com/jhuckaby/pixl-unit",
+  "license": "MIT",
+  "main": "unit.js",
+  "bin": "unit.js",
+  "scripts": {
+    "test": "pixl-unit test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jhuckaby/pixl-unit"
+  },
+  "bugs": {
+    "url": "https://github.com/jhuckaby/pixl-unit/issues"
+  },
+  "keywords": [
+    "unit",
+    "test"
+  ],
+  "dependencies": {
+    "async": "*",
+    "chalk": "*",
+    "pixl-args": ">=1.0.0",
+    "pixl-tools": ">=1.0.0"
+  },
+  "devDependencies": {}
 }
