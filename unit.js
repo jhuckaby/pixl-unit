@@ -197,7 +197,7 @@ async.eachSeries( files,
 		print( fail_color("Tests failed: " + stats.failed + " of " + stats.tests + " (" + pct(stats.failed, stats.tests) + ")") + "\n" );
 		print( chalk.gray("Assertions:   " + stats.asserts) + "\n" );
 		print( chalk.gray("Test Suites:  " + stats.suites) + "\n" );
-		print( chalk.gray("Time Elapsed: " + Math.floor(stats.elapsed) + " seconds") + "\n" );
+		print( chalk.gray("Time Elapsed: " + Tools.shortFloat(stats.elapsed) + " seconds") + "\n" );
 		print("\n");
 		
 		// json file output
