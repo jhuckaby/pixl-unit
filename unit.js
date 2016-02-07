@@ -102,6 +102,7 @@ async.eachSeries( files,
 					var test_name = test_func.name ? test_func.name : ("UnnamedTest" + stats.tests);
 					
 					var test = {
+						name: test_name,
 						expected: 0,
 						asserted: 0,
 						passed: 0,
@@ -110,7 +111,7 @@ async.eachSeries( files,
 						expect: function(num) {
 							this.expected = num;
 						},
-						assert: function(fact, msg) {
+						assert: function(fact, msg, data) {
 							this.asserted++;
 							if (fact) {
 								this.passed++;
@@ -121,6 +122,9 @@ async.eachSeries( files,
 								verbose("F\n");
 								if (!msg) msg = "(No message)";
 								print( chalk.bold.red("Assert Failed: " + file + ": " + test_name + ": " + msg) + "\n" );
+								if (typeof(data) != 'undefined') {
+									print( chalk.gray( chalk.bold("Data: ") + JSON.stringify(data)) + "\n" );
+								}
 								stats.errors.push( "Assert Failed: " + file + ": " + test_name + ": " + msg );
 								if (args.fatal) process.exit(1);
 							}
@@ -148,15 +152,26 @@ async.eachSeries( files,
 								stats.failed++;
 								print( chalk.bold.red("X " + test_name) + "\n" );
 							}
+							
+							if (suite.afterEach) suite.afterEach(this);
 							callback();
-						} // done
+						}, // done
+						verbose: function(msg, data) {
+							// log verbose message and data
+							verbose( chalk.bold.gray(msg) + "\n" );
+							if (typeof(data) != 'undefined') {
+								verbose( chalk.gray(JSON.stringify(data)) + "\n" );
+							}
+						}
 					}; // test object
 					
-					// convenience, to better simulate nodeunit
+					// convenience, to better simulate nodeunit and others
 					test.ok = test.assert;
+					test.debug = test.verbose;
 					
 					// invoke test
 					verbose("Running test: " + test_name + "...\n");
+					if (suite.beforeEach) suite.beforeEach(test);
 					test_func.apply( suite, [test] );
 				},
 				function(err) {
