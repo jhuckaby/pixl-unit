@@ -32,8 +32,9 @@ Specify command-line arguments using the format `--key value` and do this *after
 | `verbose` | 0 | Set this to `1` to enable verbose output to the console. | 
 | `quiet` | 0 | Set this to `1` to suppress all output to the console. | 
 | `color` | 1 | Enables or disables color output using the chalk module. | 
-| `fatal` | 0 | Set this to `1` to exit immediately after the first assertion failure. | 
+| `fatal` | 0 | Set this to `1` to exit immediately after the first assertion failure (includes stack trace). | 
 | `output` | "" | Set this to a file path to emit a JSON report (works with quiet mode). | 
+| `delay` | 0 | Insert a delay between each test by setting this to the desired number of seconds. |
 
 Here is an example, which runs all the tests in `tests.js`, enables quiet mode, and generates a JSON report file:
 
@@ -67,7 +68,7 @@ Then you can simply type `npm test` to run your module's unit tests.
 
 ## Sample Output
 
-`pixl-unit` outputs to the console by default, using the [chalk](https://www.npmjs.com/package/chalk) module for ANSI color.  It shows green checkmarks for passed tests, and red 'X's for failures.  Stats are summarized at the bottom.  You can also suppress this output and/or generate a JSON report file (see below).
+`pixl-unit` outputs to the console by default, using the [chalk](https://www.npmjs.com/package/chalk) module for ANSI color.  Stats are summarized at the bottom.  You can also suppress this output and/or generate a JSON report file (see below).
 
 ```
 Simple Unit Test Runner v1.0
@@ -77,9 +78,6 @@ Args: {"threads":1,"verbose":0,"quiet":0,"color":1,"fatal":0,"output":""}
 Suites: ["/Users/jhuckaby/node_modules/pixl-unit/test.js"]
 
 Suite: /Users/jhuckaby/node_modules/pixl-unit/test.js
-✓ testTrue
-✓ testAsync
-✓ testExpect
 
 ✓ OK - All tests passed
 
@@ -90,7 +88,27 @@ Test Suites:  1
 Time Elapsed: 0 seconds
 ```
 
-Here is example JSON report:
+Assertion failures are highlighted in bold + red, and include the test name, assertion failure message, and any additional data if provided.  Example:
+
+```
+Suite: /Users/jhuckaby/node_modules/pixl-unit/test.js
+
+Assert Failed: /Users/jhuckaby/node_modules/pixl-unit/test.js: testExpect: Assertion 2 of 3
+Data: {"additional_data":12345}       
+X testExpect                          
+                                       
+X - Errors occurred
+
+Tests passed: 2 of 3 (66%)
+Tests failed: 1 of 3 (33%)
+Assertions:   5
+Test Suites:  1
+Time Elapsed: 0.11 seconds
+```
+
+You can also get a full stack trace by enabling verbose mode (`--verbose`) or fatal mode, which also exits at the first failure (`--fatal`).  This will give you the exact line number where the assertion failed.
+
+Here is example JSON report (activate by including `--output MYREPORT.json` on the CLI):
 
 ```javascript
 {

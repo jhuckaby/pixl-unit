@@ -26,7 +26,7 @@ module.exports = {
 			// test the expect feature
 			test.expect(3);
 			test.ok( true, "Assertion 1 of 3" );
-			test.ok( true, "Assertion 2 of 3" );
+			test.ok( true, "Assertion 2 of 3", { additional_data: 12345 } );
 			test.ok( true, "Assertion 3 of 3" );
 			test.done();
 		}

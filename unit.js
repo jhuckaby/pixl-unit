@@ -12,6 +12,7 @@ var async = require("async");
 var chalk = require("chalk");
 var Args = require("pixl-args");
 var Tools = require("pixl-tools");
+var cli = require('pixl-cli');
 
 // shift files off beginning of arg array
 var argv = JSON.parse( JSON.stringify(process.argv.slice(2)) );
@@ -49,9 +50,41 @@ for (var idx = 0, len = paths.length; idx < len; idx++) {
 	} // dir
 } // foreach path
 
+// setup progress bar
+var progress = {
+	active: false,
+	
+	start: function() {
+		if (args.verbose) return;
+		cli.progress.start();
+		this.active = true;
+	},
+	update: function(amount) {
+		if (!this.active || args.verbose) return;
+		cli.progress.update( amount );
+	},
+	hide: function() {
+		if (!this.active || args.verbose) return;
+		cli.progress.erase();
+	},
+	show: function() {
+		if (!this.active || args.verbose) return;
+		cli.progress.draw();
+	},
+	end: function() {
+		if (!this.active || args.verbose) return;
+		cli.progress.end();
+		this.active = false;
+	}
+};
+
 var print = function(msg) {
 	// print message to console
-	if (!args.quiet) process.stdout.write(msg);
+	if (!args.quiet) {
+		progress.hide();
+		process.stdout.write(msg);
+		progress.show();
+	}
 };
 var verbose = function(msg) {
 	// print only in verbose mode
@@ -82,7 +115,14 @@ var stats = {
 // iterate over files
 async.eachSeries( files, 
 	function(file, callback) {
+		// run each suite
 		print("\n" + chalk.bold.yellow("Suite: " + file) + "\n");
+		progress.start({
+			catchInt: true,
+			catchTerm: true,
+			catchCrash: true,
+			exitOnSig: true
+		});
 		
 		// load js file and grab tests
 		var suite = require( path.resolve(file) );
@@ -99,7 +139,7 @@ async.eachSeries( files,
 				function(test_func, callback) {
 					// execute single test
 					stats.tests++;
-					var test_name = test_func.name ? test_func.name : ("UnnamedTest" + stats.tests);
+					var test_name = test_func.testName || test_func.name || ("UnnamedTest" + stats.tests);
 					
 					var test = {
 						name: test_name,
@@ -121,15 +161,22 @@ async.eachSeries( files,
 								this.failed++;
 								verbose("F\n");
 								if (!msg) msg = "(No message)";
-								print( chalk.bold.red("Assert Failed: " + file + ": " + test_name + ": " + msg) + "\n" );
+								print( "\n" + chalk.bold.red("Assert Failed: " + file + ": " + test_name + ": " + msg) + "\n" );
 								if (typeof(data) != 'undefined') {
 									print( chalk.gray( chalk.bold("Data: ") + JSON.stringify(data)) + "\n" );
 								}
 								stats.errors.push( "Assert Failed: " + file + ": " + test_name + ": " + msg );
-								if (args.fatal) process.exit(1);
+								if (args.verbose || args.fatal) {
+									print( "\n" + (new Error("Stack Trace:")).stack + "\n\n" );
+								}
+								if (args.fatal) {
+									progress.end();
+									process.exit(1);
+								}
 							}
 						},
 						done: function() {
+							progress.update( stats.tests / suite.tests.length );
 							stats.asserts += this.asserted;
 							
 							if (this.expected && (this.asserted != this.expected)) {
@@ -140,12 +187,15 @@ async.eachSeries( files,
 									"Expected " + this.expected + ", Got " + this.asserted + ".";
 								print( chalk.bold.red(msg) + "\n" );
 								stats.errors.push( msg );
-								if (args.fatal) process.exit(1);
+								if (args.fatal) {
+									progress.end();
+									process.exit(1);
+								}
 							}
 							if (!this.failed) {
 								// test passed
 								stats.passed++;
-								print( chalk.bold.green("✓ " + test_name) + "\n" );
+								verbose( chalk.bold.green("✓ " + test_name) + "\n" );
 							}
 							else {
 								// test failed
@@ -170,12 +220,19 @@ async.eachSeries( files,
 					test.debug = test.verbose;
 					
 					// invoke test
-					verbose("Running test: " + test_name + "...\n");
-					if (suite.beforeEach) suite.beforeEach(test);
-					test_func.apply( suite, [test] );
+					var runTest = function() {
+						verbose("Running test: " + test_name + "...\n");
+						if (suite.beforeEach) suite.beforeEach(test);
+						test_func.apply( suite, [test] );
+					};
+					if (args.delay) {
+						setTimeout( runTest, parseFloat(args.delay) * 1000 );
+					}
+					else runTest();
 				},
 				function(err) {
 					 // all tests complete in suite
+					 progress.end();
 					 suite.tearDown( function() {
 					 	callback();
 					 } ); // tearDown
@@ -208,11 +265,20 @@ async.eachSeries( files,
 		var fail_color = stats.failed ? chalk.bold.red : chalk.bold.gray;
 		
 		print("\n");
-		print( pass_color("Tests passed: " + stats.passed + " of " + stats.tests + " (" + pct(stats.passed, stats.tests) + ")") + "\n" );
-		print( fail_color("Tests failed: " + stats.failed + " of " + stats.tests + " (" + pct(stats.failed, stats.tests) + ")") + "\n" );
-		print( chalk.gray("Assertions:   " + stats.asserts) + "\n" );
-		print( chalk.gray("Test Suites:  " + stats.suites) + "\n" );
-		print( chalk.gray("Time Elapsed: " + Tools.shortFloat(stats.elapsed) + " seconds") + "\n" );
+		print( pass_color("Tests passed: " + Tools.commify(stats.passed) + " of " + Tools.commify(stats.tests) + " (" + pct(stats.passed, stats.tests) + ")") + "\n" );
+		print( fail_color("Tests failed: " + Tools.commify(stats.failed) + " of " + Tools.commify(stats.tests) + " (" + pct(stats.failed, stats.tests) + ")") + "\n" );
+		print( chalk.gray("Assertions:   " + Tools.commify(stats.asserts)) + "\n" );
+		print( chalk.gray("Test Suites:  " + Tools.commify(stats.suites)) + "\n" );
+		
+		if (stats.elapsed >= 61.0) {
+			// 1 minute 1 second
+			print( chalk.gray("Time Elapsed: " + Tools.getTextFromSeconds(stats.elapsed)) + "\n" );
+		}
+		else {
+			// 60.999 seconds
+			print( chalk.gray("Time Elapsed: " + Tools.shortFloat(stats.elapsed) + " seconds") + "\n" );
+		}
+		
 		print("\n");
 		
 		// json file output
