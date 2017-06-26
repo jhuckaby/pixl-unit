@@ -171,7 +171,7 @@ async.eachSeries( files,
 								}
 								if (args.fatal) {
 									progress.end();
-									process.exit(1);
+									suite.tearDown( function() { process.exit(1); } );
 								}
 							}
 						},
@@ -189,7 +189,7 @@ async.eachSeries( files,
 								stats.errors.push( msg );
 								if (args.fatal) {
 									progress.end();
-									process.exit(1);
+									suite.tearDown( function() { process.exit(1); } );
 								}
 							}
 							if (!this.failed) {
