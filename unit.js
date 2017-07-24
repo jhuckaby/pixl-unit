@@ -126,6 +126,8 @@ async.eachSeries( files,
 		
 		// load js file and grab tests
 		var suite = require( path.resolve(file) );
+		suite.args = args;
+		suite.stats = stats;
 		
 		// stub out setUp and tearDown if not defined
 		if (!suite.setUp) suite.setUp = function(callback) { callback(); };
@@ -212,6 +214,13 @@ async.eachSeries( files,
 							if (typeof(data) != 'undefined') {
 								verbose( chalk.gray(JSON.stringify(data)) + "\n" );
 							}
+						},
+						fatal: function(msg, data) {
+							// force a fatal error and immediate shutdown
+							args.fatal = true;
+							args.verbose = true;
+							this.verbose( msg, data );
+							this.assert( false, msg );
 						}
 					}; // test object
 					
