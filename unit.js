@@ -173,6 +173,7 @@ async.eachSeries( files,
 								}
 								if (args.fatal) {
 									progress.end();
+									if (args.die) process.exit(1); // die without tearDown
 									suite.tearDown( function() { process.exit(1); } );
 								}
 							}
@@ -191,6 +192,7 @@ async.eachSeries( files,
 								stats.errors.push( msg );
 								if (args.fatal) {
 									progress.end();
+									if (args.die) process.exit(1); // die without tearDown
 									suite.tearDown( function() { process.exit(1); } );
 								}
 							}
@@ -230,7 +232,7 @@ async.eachSeries( files,
 					
 					// invoke test
 					var runTest = function() {
-						verbose("Running test: " + test_name + "...\n");
+						verbose("Running test: " + test.name + "...\n");
 						if (suite.beforeEach) suite.beforeEach(test);
 						test_func.apply( suite, [test] );
 					};
