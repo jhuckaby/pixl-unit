@@ -144,6 +144,7 @@ async.eachSeries( files,
 					var test_name = test_func.testName || test_func.name || ("UnnamedTest" + stats.tests);
 					
 					var test = {
+						file: file,
 						name: test_name,
 						expected: 0,
 						asserted: 0,
@@ -170,6 +171,9 @@ async.eachSeries( files,
 								stats.errors.push( "Assert Failed: " + file + ": " + test_name + ": " + msg );
 								if (args.verbose || args.fatal) {
 									print( "\n" + (new Error("Stack Trace:")).stack + "\n\n" );
+								}
+								if (suite.onAssertFailure) {
+									suite.onAssertFailure( test, msg, data );
 								}
 								if (args.fatal) {
 									progress.end();
