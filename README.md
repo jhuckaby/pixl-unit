@@ -216,6 +216,21 @@ exports.afterEach = function(test) {
 };
 ```
 
+## timeout
+
+You can optionally set a maximum elapsed time for a test.  If this time limit is exceeded, an assertion is force-failed on the test.  To do this, call `timeout()` at the start of your test, and specify the timeout value in milliseconds.  Example use:
+
+```js
+function testTimeout(test) {
+	test.timeout( 200 ); // 200ms max time
+	
+	setTimeout( function() {
+		test.ok(true == true, 'Testing 100ms later');
+		test.done();
+	}, 100 );
+}
+```
+
 ## Debug Logging
 
 There are two ways to include additional debugging data with your unit test output.  First, you can include a 3rd argument to `ok()` or `assert()` which will be logged *only if the assertion fails*.  It can be any JavaScript primitive type (string, number, etc.) or an object, and will be JSON serialized and emitted in gray (if color is enabled).  Example:
@@ -244,7 +259,7 @@ test.debug( "This will only be printed in verbose mode", { additional: "data" } 
 
 The MIT License
 
-Copyright (c) 2015 - 2016 Joseph Huckaby.
+Copyright (c) 2015 - 2018 Joseph Huckaby.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

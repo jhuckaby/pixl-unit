@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Simple Unit Test Runner
-// Copyright (c) 2015 Joseph Huckaby
+// Copyright (c) 2015 - 2018 Joseph Huckaby
 // Released under the MIT License
 
 var fs = require("fs");
@@ -13,6 +13,7 @@ var chalk = require("chalk");
 var Args = require("pixl-args");
 var Tools = require("pixl-tools");
 var cli = require('pixl-cli');
+var pkg = require('./package.json');
 
 // shift files off beginning of arg array
 var argv = JSON.parse( JSON.stringify(process.argv.slice(2)) );
@@ -97,7 +98,7 @@ var pct = function(amount, total) {
 	return '' + Math.floor( (amount / total) * 100 ) + '%';
 };
 
-print("\n" + chalk.bold.magenta("Simple Unit Test Runner v1.0") + "\n");
+print("\n" + chalk.bold.magenta("Simple Unit Test Runner v" + pkg.version) + "\n");
 print( chalk.gray((new Date()).toLocaleString()) + "\n" );
 
 print("\n" + chalk.gray("Args: " + JSON.stringify(args)) + "\n");
@@ -150,6 +151,7 @@ async.eachSeries( files,
 						asserted: 0,
 						passed: 0,
 						failed: 0,
+						completed: false,
 						
 						expect: function(num) {
 							this.expected = num;
@@ -183,6 +185,20 @@ async.eachSeries( files,
 							}
 						},
 						done: function() {
+							if (this.timer) clearTimeout( this.timer );
+							if (this.completed) {
+								var msg = "Error: test.done() called twice: " + file + ": " + test_name;
+								print( chalk.bold.red(msg) + "\n" );
+								stats.errors.push( msg );
+								if (args.fatal) {
+									progress.end();
+									if (args.die) process.exit(1); // die without tearDown
+									suite.tearDown( function() { process.exit(1); } );
+									return;
+								}
+							}
+							this.completed = true;
+							
 							progress.update( stats.tests / suite.tests.length );
 							stats.asserts += this.asserted;
 							
@@ -198,6 +214,7 @@ async.eachSeries( files,
 									progress.end();
 									if (args.die) process.exit(1); // die without tearDown
 									suite.tearDown( function() { process.exit(1); } );
+									return;
 								}
 							}
 							if (!this.failed) {
@@ -227,6 +244,15 @@ async.eachSeries( files,
 							args.verbose = true;
 							this.verbose( msg, data );
 							this.assert( false, msg );
+						},
+						timeout: function(msec) {
+							// set a timeout for the test to complete
+							var self = this;
+							this.timer = setTimeout( function() {
+								delete self.timer;
+								self.ok( false, "Error: Maximum time exceeded for test (" + msec + " ms)" );
+								self.done();
+							}, msec );
 						}
 					}; // test object
 					

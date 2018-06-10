@@ -22,6 +22,15 @@ module.exports = {
 			}, 100 );
 		},
 		
+		function testTimeout(test) {
+			test.timeout( 200 ); // 200ms max time
+			
+			setTimeout( function() {
+				test.ok(true == true, 'Testing 100ms later');
+				test.done();
+			}, 100 );
+		},
+		
 		function testExpect(test) {
 			// test the expect feature
 			test.expect(3);
