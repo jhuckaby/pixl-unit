@@ -229,7 +229,8 @@ async.eachSeries( files,
 							}
 							
 							if (suite.afterEach) suite.afterEach(this);
-							callback();
+							// callback();
+							process.nextTick( callback );
 						}, // done
 						verbose: function(msg, data) {
 							// log verbose message and data
