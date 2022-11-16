@@ -35,6 +35,7 @@ Specify command-line arguments using the format `--key value` and do this *after
 | `fatal` | 0 | Set this to `1` to exit immediately after the first assertion failure (includes stack trace). | 
 | `output` | "" | Set this to a file path to emit a JSON report (works with quiet mode). | 
 | `delay` | 0 | Insert a delay between each test by setting this to the desired number of seconds. |
+| `times` | 1 | Run the tests a specified number of times. |
 
 Here is an example, which runs all the tests in `tests.js`, enables quiet mode, and generates a JSON report file:
 
@@ -259,7 +260,7 @@ test.debug( "This will only be printed in verbose mode", { additional: "data" } 
 
 The MIT License
 
-Copyright (c) 2015 - 2018 Joseph Huckaby.
+Copyright (c) 2015 - 2022 Joseph Huckaby.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

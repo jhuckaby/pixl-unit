@@ -1,6 +1,6 @@
 {
   "name": "pixl-unit",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "A very simple unit test runner for Node.js.",
   "author": "Joseph Huckaby <jhuckaby@gmail.com>",
   "homepage": "https://github.com/jhuckaby/pixl-unit",

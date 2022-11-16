@@ -136,150 +136,156 @@ async.eachSeries( files,
 		
 		// setUp
 		suite.setUp( function() {
-		
-			// execute tests
-			async.eachLimit( suite.tests, args.threads, 
-				function(test_func, callback) {
-					// execute single test
-					stats.tests++;
-					var test_name = test_func.testName || test_func.name || ("UnnamedTest" + stats.tests);
-					
-					var test = {
-						file: file,
-						name: test_name,
-						expected: 0,
-						asserted: 0,
-						passed: 0,
-						failed: 0,
-						completed: false,
+			
+			// execute tests N times (usually 1)
+			async.timesSeries( args.times || 1, function(tidx, callback) {
+				async.eachLimit( suite.tests, args.threads, 
+					function(test_func, callback) {
+						// execute single test
+						stats.tests++;
+						var test_name = test_func.testName || test_func.name || ("UnnamedTest" + stats.tests);
 						
-						expect: function(num) {
-							this.expected = num;
-						},
-						assert: function(fact, msg, data) {
-							this.asserted++;
-							if (fact) {
-								this.passed++;
-								verbose('.');
-							}
-							else {
-								this.failed++;
-								verbose("F\n");
-								if (!msg) msg = "(No message)";
-								print( "\n" + chalk.bold.red("Assert Failed: " + file + ": " + test_name + ": " + msg) + "\n" );
+						var test = {
+							file: file,
+							name: test_name,
+							expected: 0,
+							asserted: 0,
+							passed: 0,
+							failed: 0,
+							completed: false,
+							
+							expect: function(num) {
+								this.expected = num;
+							},
+							assert: function(fact, msg, data) {
+								this.asserted++;
+								if (fact) {
+									this.passed++;
+									verbose('.');
+								}
+								else {
+									this.failed++;
+									verbose("F\n");
+									if (!msg) msg = "(No message)";
+									print( "\n" + chalk.bold.red("Assert Failed: " + file + ": " + test_name + ": " + msg) + "\n" );
+									if (typeof(data) != 'undefined') {
+										print( chalk.gray( chalk.bold("Data: ") + JSON.stringify(data)) + "\n" );
+									}
+									stats.errors.push( "Assert Failed: " + file + ": " + test_name + ": " + msg );
+									if (args.verbose || args.fatal) {
+										print( "\n" + (new Error("Stack Trace:")).stack + "\n\n" );
+									}
+									if (suite.onAssertFailure) {
+										suite.onAssertFailure( test, msg, data );
+									}
+									if (args.fatal) {
+										progress.end();
+										if (args.die) process.exit(1); // die without tearDown
+										suite.tearDown( function() { process.exit(1); } );
+									}
+								}
+							},
+							done: function() {
+								if (this.timer) clearTimeout( this.timer );
+								if (this.completed) {
+									var msg = "Error: test.done() called twice: " + file + ": " + test_name;
+									print( chalk.bold.red(msg) + "\n" );
+									stats.errors.push( msg );
+									if (args.fatal) {
+										progress.end();
+										if (args.die) process.exit(1); // die without tearDown
+										suite.tearDown( function() { process.exit(1); } );
+										return;
+									}
+								}
+								this.completed = true;
+								
+								progress.update( stats.tests / (suite.tests.length * (args.times || 1)) );
+								stats.asserts += this.asserted;
+								
+								if (this.expected && (this.asserted != this.expected)) {
+									// wrong number of assertions
+									this.failed++;
+									verbose("F\n");
+									var msg = "Error: Wrong number of assertions: " + file + ": " + test_name + ": " + 
+										"Expected " + this.expected + ", Got " + this.asserted + ".";
+									print( chalk.bold.red(msg) + "\n" );
+									stats.errors.push( msg );
+									if (args.fatal) {
+										progress.end();
+										if (args.die) process.exit(1); // die without tearDown
+										suite.tearDown( function() { process.exit(1); } );
+										return;
+									}
+								}
+								if (!this.failed) {
+									// test passed
+									stats.passed++;
+									verbose( chalk.bold.green("✓ " + test_name) + "\n" );
+								}
+								else {
+									// test failed
+									stats.failed++;
+									print( chalk.bold.red("X " + test_name) + "\n" );
+								}
+								
+								if (suite.afterEach) suite.afterEach(this);
+								// callback();
+								process.nextTick( callback );
+							}, // done
+							verbose: function(msg, data) {
+								// log verbose message and data
+								verbose( chalk.bold.gray(msg) + "\n" );
 								if (typeof(data) != 'undefined') {
-									print( chalk.gray( chalk.bold("Data: ") + JSON.stringify(data)) + "\n" );
+									verbose( chalk.gray(JSON.stringify(data)) + "\n" );
 								}
-								stats.errors.push( "Assert Failed: " + file + ": " + test_name + ": " + msg );
-								if (args.verbose || args.fatal) {
-									print( "\n" + (new Error("Stack Trace:")).stack + "\n\n" );
-								}
-								if (suite.onAssertFailure) {
-									suite.onAssertFailure( test, msg, data );
-								}
-								if (args.fatal) {
-									progress.end();
-									if (args.die) process.exit(1); // die without tearDown
-									suite.tearDown( function() { process.exit(1); } );
-								}
+							},
+							fatal: function(msg, data) {
+								// force a fatal error and immediate shutdown
+								args.fatal = true;
+								args.verbose = true;
+								this.verbose( msg, data );
+								this.assert( false, msg );
+							},
+							timeout: function(msec) {
+								// set a timeout for the test to complete
+								var self = this;
+								this.timer = setTimeout( function() {
+									delete self.timer;
+									self.ok( false, "Error: Maximum time exceeded for test (" + msec + " ms)" );
+									self.done();
+								}, msec );
 							}
-						},
-						done: function() {
-							if (this.timer) clearTimeout( this.timer );
-							if (this.completed) {
-								var msg = "Error: test.done() called twice: " + file + ": " + test_name;
-								print( chalk.bold.red(msg) + "\n" );
-								stats.errors.push( msg );
-								if (args.fatal) {
-									progress.end();
-									if (args.die) process.exit(1); // die without tearDown
-									suite.tearDown( function() { process.exit(1); } );
-									return;
-								}
-							}
-							this.completed = true;
-							
-							progress.update( stats.tests / suite.tests.length );
-							stats.asserts += this.asserted;
-							
-							if (this.expected && (this.asserted != this.expected)) {
-								// wrong number of assertions
-								this.failed++;
-								verbose("F\n");
-								var msg = "Error: Wrong number of assertions: " + file + ": " + test_name + ": " + 
-									"Expected " + this.expected + ", Got " + this.asserted + ".";
-								print( chalk.bold.red(msg) + "\n" );
-								stats.errors.push( msg );
-								if (args.fatal) {
-									progress.end();
-									if (args.die) process.exit(1); // die without tearDown
-									suite.tearDown( function() { process.exit(1); } );
-									return;
-								}
-							}
-							if (!this.failed) {
-								// test passed
-								stats.passed++;
-								verbose( chalk.bold.green("✓ " + test_name) + "\n" );
-							}
-							else {
-								// test failed
-								stats.failed++;
-								print( chalk.bold.red("X " + test_name) + "\n" );
-							}
-							
-							if (suite.afterEach) suite.afterEach(this);
-							// callback();
-							process.nextTick( callback );
-						}, // done
-						verbose: function(msg, data) {
-							// log verbose message and data
-							verbose( chalk.bold.gray(msg) + "\n" );
-							if (typeof(data) != 'undefined') {
-								verbose( chalk.gray(JSON.stringify(data)) + "\n" );
-							}
-						},
-						fatal: function(msg, data) {
-							// force a fatal error and immediate shutdown
-							args.fatal = true;
-							args.verbose = true;
-							this.verbose( msg, data );
-							this.assert( false, msg );
-						},
-						timeout: function(msec) {
-							// set a timeout for the test to complete
-							var self = this;
-							this.timer = setTimeout( function() {
-								delete self.timer;
-								self.ok( false, "Error: Maximum time exceeded for test (" + msec + " ms)" );
-								self.done();
-							}, msec );
+						}; // test object
+						
+						// convenience, to better simulate nodeunit and others
+						test.ok = test.assert;
+						test.debug = test.verbose;
+						
+						// invoke test
+						var runTest = function() {
+							verbose("Running test: " + test.name + "...\n");
+							if (suite.beforeEach) suite.beforeEach(test);
+							test_func.apply( suite, [test] );
+						};
+						if (args.delay) {
+							setTimeout( runTest, parseFloat(args.delay) * 1000 );
 						}
-					}; // test object
-					
-					// convenience, to better simulate nodeunit and others
-					test.ok = test.assert;
-					test.debug = test.verbose;
-					
-					// invoke test
-					var runTest = function() {
-						verbose("Running test: " + test.name + "...\n");
-						if (suite.beforeEach) suite.beforeEach(test);
-						test_func.apply( suite, [test] );
-					};
-					if (args.delay) {
-						setTimeout( runTest, parseFloat(args.delay) * 1000 );
-					}
-					else runTest();
-				},
-				function(err) {
-					 // all tests complete in suite
-					 progress.end();
-					 suite.tearDown( function() {
-					 	callback();
-					 } ); // tearDown
-				} // all tests complete
-			); // each test
+						else runTest();
+					},
+					function(err) {
+						// all tests complete in suite
+						callback();
+					} // all tests complete
+				); // each test
+			},
+			function() {
+				// end of timesSeries
+				progress.end();
+				suite.tearDown( function() {
+					callback();
+				} ); // tearDown
+			} ); // async.timesSeries
 			
 		} ); // setUp
 	},
@@ -311,6 +317,7 @@ async.eachSeries( files,
 		print( fail_color("Tests failed: " + Tools.commify(stats.failed) + " of " + Tools.commify(stats.tests) + " (" + pct(stats.failed, stats.tests) + ")") + "\n" );
 		print( chalk.gray("Assertions:   " + Tools.commify(stats.asserts)) + "\n" );
 		print( chalk.gray("Test Suites:  " + Tools.commify(stats.suites)) + "\n" );
+		if (args.times && (args.times > 1)) print( chalk.gray("Iterations:  " + Tools.commify(args.times)) + "\n" );
 		
 		if (stats.elapsed >= 61.0) {
 			// 1 minute 1 second
