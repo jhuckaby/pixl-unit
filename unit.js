@@ -118,12 +118,6 @@ async.eachSeries( files,
 	function(file, callback) {
 		// run each suite
 		print("\n" + chalk.bold.yellow("Suite: " + file) + "\n");
-		progress.start({
-			catchInt: true,
-			catchTerm: true,
-			catchCrash: true,
-			exitOnSig: true
-		});
 		
 		// load js file and grab tests
 		var suite = require( path.resolve(file) );
@@ -136,6 +130,14 @@ async.eachSeries( files,
 		
 		// setUp
 		suite.setUp( function() {
+			
+			// start progress tracking
+			progress.start({
+				catchInt: true,
+				catchTerm: true,
+				catchCrash: true,
+				exitOnSig: true
+			});
 			
 			// execute tests N times (usually 1)
 			async.timesSeries( args.times || 1, function(tidx, callback) {
@@ -275,13 +277,16 @@ async.eachSeries( files,
 					},
 					function(err) {
 						// all tests complete in suite
-						callback();
+						// if user code reset args.times and we're in a non-zero iteration, abort timesSeries
+						if ((tidx > 0) && !args.times) callback("ABORT");
+						else callback();
 					} // all tests complete
 				); // each test
 			},
 			function() {
 				// end of timesSeries
 				progress.end();
+				
 				suite.tearDown( function() {
 					callback();
 				} ); // tearDown
