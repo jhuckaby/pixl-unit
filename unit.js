@@ -268,8 +268,40 @@ async.eachSeries( files,
 						var runTest = function() {
 							verbose("Running test: " + test.name + "...\n");
 							if (suite.beforeEach) suite.beforeEach(test);
-							test_func.apply( suite, [test] );
+							
+							var result;
+							try { 
+								result = test_func.apply( suite, [test] ); 
+							}
+							catch (err) {
+								// sync throw
+								test.assert(false, err && err.message ? err.message : String(err), {
+									stack: err && err.stack
+								});
+								return test.done();
+							}
+							
+							// sniff out a promise and handle separately
+							if (result && (typeof(result.then) === 'function')) {
+								var orig_done = test.done;
+								test.done = function() {}; // no-op in case user does both
+								
+								result.then(
+									function() {
+										// promise resolved happily
+										orig_done.call(test);
+									},
+									function(err) {
+										// async throw
+										test.assert(false, err && err.message ? err.message : String(err), {
+											stack: err && err.stack
+										});
+										orig_done.call(test);
+									}
+								);
+							} // promise
 						};
+						
 						if (args.delay) {
 							setTimeout( runTest, parseFloat(args.delay) * 1000 );
 						}

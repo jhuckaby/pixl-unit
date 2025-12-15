@@ -2,6 +2,12 @@
 // Copyright (c) 2015 Joseph Huckaby
 // Released under the MIT License
 
+const assert = require('node:assert/strict');
+
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+};
+
 module.exports = {
 	setUp: function (callback) {
 		// always called before tests start
@@ -15,7 +21,7 @@ module.exports = {
 			test.done();
 		},
 		
-		function testAsync(test) {
+		function testTimeout(test) {
 			setTimeout( function() {
 				test.ok(true == true, 'Testing 100ms later');
 				test.done();
@@ -38,6 +44,14 @@ module.exports = {
 			test.ok( true, "Assertion 2 of 3", { additional_data: 12345 } );
 			test.ok( true, "Assertion 3 of 3" );
 			test.done();
+		},
+		
+		async function testAsync(test) {
+			// true async function
+			// pixl-unit will wait for promise to resolve
+			// no need to call test.done(), and we can also use node's assert here
+			await sleep(100);
+			assert.strictEqual(1, 1);
 		}
 		
 	], // tests array

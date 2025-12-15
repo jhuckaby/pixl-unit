@@ -160,10 +160,10 @@ function testTrue(test) {
 
 The `test` object has an assertion method called `ok()` (`assert()` is also acceptable).  This expects a boolean `true` for success, `false` for failure, and optionally accepts a message to be displayed upon failure.
 
-Calling `test.done()` indicates that all the asserts have been called, and the test is complete.  This is useful because tests may be asynchronous, and finish in another pseudothread.  Example:
+Calling `test.done()` indicates that all the asserts have been called, and the test is complete.  This is useful because tests may be asynchronous, and finish in another thread.  Example:
 
 ```javascript
-function testAsync(test) {
+function testTimeout(test) {
 	setTimeout( function() {
 		test.ok(true == true, 'Testing 100ms later');
 		test.done();
@@ -183,6 +183,27 @@ function testExpect(test) {
 	test.done();
 }
 ```
+
+You can also provide true async functions which are handled properly.  You do not need to call `test.done()` in these cases (it's a no-op).  Example:
+
+```js
+async function testAsync(test) {
+	// true async function
+	// test harness will wait for promise to resolve
+	// no need to call test.done()
+	await sleep(100);
+}
+```
+
+Feel free to use Node's built-in `assert` library for async tests, as exceptions will be caught correctly:
+
+```js
+async function testMath(test) {
+	assert.strictEqual(1, 0); // will fail
+}
+```
+
+However, note that pixl-unit's own "assertion counter" stat (`asserts`) doesn't increment for these calls.
 
 ## setUp and tearDown
 
@@ -260,7 +281,7 @@ test.debug( "This will only be printed in verbose mode", { additional: "data" } 
 
 The MIT License
 
-Copyright (c) 2015 - 2022 Joseph Huckaby.
+Copyright (c) 2015 - 2026 Joseph Huckaby.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
