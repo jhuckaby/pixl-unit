@@ -1,6 +1,6 @@
 {
   "name": "pixl-unit",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A very simple unit test runner for Node.js.",
   "author": "Joseph Huckaby <jhuckaby@gmail.com>",
   "homepage": "https://github.com/jhuckaby/pixl-unit",
@@ -25,7 +25,7 @@
     "async": "2.6.4",
     "chalk": "2.4.1",
     "pixl-args": "^1.0.0",
-    "pixl-tools": "^1.0.0",
+    "pixl-tools": "^2.0.2",
     "pixl-cli": "^1.0.0"
   },
   "devDependencies": {}
